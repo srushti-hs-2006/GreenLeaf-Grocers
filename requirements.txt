@@ -1,3 +1,5 @@
-Flask
+streamlit
 pandas
 matplotlib
+pytest
+Flask
