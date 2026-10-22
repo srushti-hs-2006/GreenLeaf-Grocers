@@ -1,0 +1,263 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Dashboard | GreenLeaf Grocers{% endblock %}
+{% block page_heading %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h2>Good day, {{ session.get('username') }}! 🌿</h2>
+        <p>Here's what's happening at GreenLeaf Grocers today.</p>
+    </div>
+    <a href="{{ url_for('billing') }}" class="action-button">+ Create New Bill</a>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon revenue-icon">₹</div>
+        <p>Total Revenue</p>
+        <h2>₹{{ "%.2f"|format(revenue) }}</h2>
+        <small>Revenue from completed sales</small>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon bills-icon">🧾</div>
+        <p>Total Bills</p>
+        <h2>{{ bill_count }}</h2>
+        <small>Completed transactions</small>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon average-icon">📈</div>
+        <p>Average Bill Value</p>
+        <h2>₹{{ "%.2f"|format(average_bill) }}</h2>
+        <small>Average revenue per bill</small>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon stock-icon">⚠️</div>
+        <p>Low-Stock Products</p>
+        <h2>{{ low_stock }}</h2>
+        <small>Products requiring restocking</small>
+    </div>
+</div>
+
+{% if expired_products or expiring_soon %}
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <h3>⚠️ Product Expiry Alerts</h3>
+            <p>Review expired products and items expiring soon.</p>
+        </div>
+    </div>
+
+    {% if expired_products %}
+    <h4>🚨 Expired Products ({{ expired_products|length }})</h4>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Product</th><th>Expiry Date</th><th>Stock</th></tr>
+            </thead>
+            <tbody>
+                {% for product in expired_products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.expiry_date }}</td>
+                    <td>{{ product.stock }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if expiring_soon %}
+    <h4>⏳ Expiring Within 7 Days ({{ expiring_soon|length }})</h4>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Product</th><th>Expiry Date</th><th>Stock</th></tr>
+            </thead>
+            <tbody>
+                {% for product in expiring_soon %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.expiry_date }}</td>
+                    <td>{{ product.stock }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<div class="dashboard-grid">
+    <section class="panel chart-panel">
+        <div class="panel-heading">
+            <div>
+                <h3>Sales Overview</h3>
+                <p>Revenue recorded over the last seven days</p>
+            </div>
+            <span class="panel-icon">📊</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-heading">
+            <div>
+                <h3>🏆 Top-Selling Products</h3>
+                <p>Products ranked by units sold</p>
+            </div>
+        </div>
+
+        {% if top_products %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in top_products %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.units_sold }}</td>
+                        <td>₹{{ "%.2f"|format(item.revenue) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span>📦</span>
+            <p>No sales recorded yet.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<section class="panel inventory-panel">
+    <div class="panel-heading">
+        <div>
+            <h3>🥗 Category-Wise Sales</h3>
+            <p>Revenue and units sold by category</p>
+        </div>
+    </div>
+
+    {% if category_sales %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Category</th><th>Units Sold</th><th>Revenue</th></tr>
+            </thead>
+            <tbody>
+                {% for category in category_sales %}
+                <tr>
+                    <td>{{ category.category }}</td>
+                    <td>{{ category.units_sold }}</td>
+                    <td>₹{{ "%.2f"|format(category.revenue) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No category sales available yet.</p>
+    {% endif %}
+</section>
+
+<section class="panel inventory-panel">
+    <div class="panel-heading">
+        <div>
+            <h3>📦 Inventory Status</h3>
+            <p>Current stock and reorder levels</p>
+        </div>
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('products') }}" class="text-link">Manage Products →</a>
+        {% endif %}
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Unit Price</th>
+                    <th>Stock</th>
+                    <th>Reorder Level</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td><strong>{{ product.name }}</strong></td>
+                    <td>{{ product.category }}</td>
+                    <td>₹{{ "%.2f"|format(product.price) }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>{{ product.reorder_level }}</td>
+                    <td>{{ product.expiry_date or '—' }}</td>
+                    <td>
+                        {% if product.stock == 0 %}
+                        <span class="badge danger">Out of Stock</span>
+                        {% elif product.stock <= product.reorder_level %}
+                        <span class="badge warning">Low Stock</span>
+                        {% else %}
+                        <span class="badge healthy">In Stock</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">No products available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("salesChart");
+
+    if (!canvas || typeof Chart === "undefined") {
+        return;
+    }
+
+    const salesLabels = {{ daily_sales | map(attribute='day') | list | tojson }};
+    const salesValues = {{ daily_sales | map(attribute='revenue') | list | tojson }};
+
+    new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: salesLabels,
+            datasets: [{
+                label: "Revenue (₹)",
+                data: salesValues,
+                borderColor: "#237a4b",
+                backgroundColor: "rgba(35, 122, 75, 0.12)",
+                fill: true,
+                tension: 0.35
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}
+```

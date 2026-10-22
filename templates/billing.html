@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Billing | GreenLeaf Grocers{% endblock %}
+{% block page_heading %}Billing & Checkout{% endblock %}
+
+{% block content %}
+
+<div class="welcome-section">
+    <div>
+        <h2>Create a New Bill 🧾</h2>
+        <p>Select products and quantities to generate a customer bill.</p>
+    </div>
+</div>
+
+{% if bill %}
+
+<section class="panel receipt">
+    <div class="receipt-header">
+        <div class="receipt-logo">🌿</div>
+        <h2>GreenLeaf Grocers</h2>
+        <p>Fresh Stock. Smart Business.</p>
+        <span class="badge healthy">PAYMENT BILL</span>
+    </div>
+
+```
+<hr>
+
+<div class="receipt-details">
+    <p><strong>Bill Number:</strong> {{ bill.number }}</p>
+    <p><strong>Date:</strong> {{ bill.date }}</p>
+    <p><strong>Cashier:</strong> {{ session.get('username') }}</p>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in bill["items"] %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>₹{{ "%.2f"|format(item.price) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ "%.2f"|format(item.subtotal) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="receipt-total">
+    <span>Total Amount</span>
+    <strong>₹{{ "%.2f"|format(bill.total) }}</strong>
+</div>
+
+<div class="receipt-footer">
+    <p>Thank you for shopping with us! 💚</p>
+    <p>Please visit again.</p>
+</div>
+
+<div class="receipt-actions">
+    <button class="primary-button" onclick="window.print()">🖨️ Print Bill</button>
+    <a href="{{ url_for('billing') }}" class="action-button">+ New Bill</a>
+</div>
+```
+
+</section>
+
+{% else %}
+
+<section class="panel">
+    <div class="panel-heading">
+        <div>
+            <h3>🛒 Add Items to Bill</h3>
+            <p>Choose a product and enter the required quantity.</p>
+        </div>
+    </div>
+
+```
+{% if products %}
+<form method="POST" id="billingForm">
+    <div id="billItems">
+        <div class="bill-item">
+            <div>
+                <label>Product</label>
+                <select name="product_id" class="form-control product-select" required>
+                    <option value="">Select a product</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}"
+                            data-price="{{ product.price }}"
+                            data-stock="{{ product.stock }}">
+                        {{ product.name }} — ₹{{ "%.2f"|format(product.price) }}
+                        (Stock: {{ product.stock }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Quantity</label>
+                <input type="number" name="quantity" class="form-control quantity-input"
+                       min="1" value="1" required>
+            </div>
+
+            <div class="item-subtotal">
+                <label>Subtotal</label>
+                <strong>₹0.00</strong>
+            </div>
+
+            <button type="button" class="delete-button remove-item"
+                    onclick="removeItem(this)">Remove</button>
+        </div>
+    </div>
+
+    <div class="billing-actions">
+        <button type="button" class="action-button" id="addItem">+ Add Another Product</button>
+    </div>
+
+    <div class="bill-summary">
+        <span>Estimated Total</span>
+        <strong id="grandTotal">₹0.00</strong>
+    </div>
+
+    <button type="submit" class="primary-button checkout-button">
+        Generate Bill →
+    </button>
+</form>
+
+{% else %}
+<div class="empty-state">
+    <span>📦</span>
+    <p>No products are currently in stock.</p>
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('products') }}" class="text-link">Manage Products →</a>
+    {% endif %}
+</div>
+{% endif %}
+```
+
+</section>
+{% endif %}
+
+<script>
+const billItems = document.getElementById("billItems");
+const addItemButton = document.getElementById("addItem");
+
+function updateTotals() {
+    if (!billItems) return;
+
+    let total = 0;
+
+    billItems.querySelectorAll(".bill-item").forEach(item => {
+        const select = item.querySelector(".product-select");
+        const quantity = item.querySelector(".quantity-input");
+        const option = select.options[select.selectedIndex];
+        const price = Number(option?.dataset.price || 0);
+        const stock = Number(option?.dataset.stock || 0);
+
+        quantity.max = stock;
+
+        const qty = Math.max(0, Number(quantity.value) || 0);
+        const subtotal = price * qty;
+
+        item.querySelector(".item-subtotal strong").textContent =
+            "₹" + subtotal.toFixed(2);
+
+        total += subtotal;
+    });
+
+    document.getElementById("grandTotal").textContent =
+        "₹" + total.toFixed(2);
+}
+
+function removeItem(button) {
+    const items = billItems.querySelectorAll(".bill-item");
+
+    if (items.length === 1) {
+        alert("At least one product row is required.");
+        return;
+    }
+
+    button.closest(".bill-item").remove();
+    updateTotals();
+}
+
+if (billItems) {
+    billItems.addEventListener("change", updateTotals);
+    billItems.addEventListener("input", updateTotals);
+}
+
+if (addItemButton) {
+    addItemButton.addEventListener("click", () => {
+        const firstItem = billItems.querySelector(".bill-item");
+        const newItem = firstItem.cloneNode(true);
+
+        newItem.querySelector(".product-select").selectedIndex = 0;
+        newItem.querySelector(".quantity-input").value = 1;
+        newItem.querySelector(".item-subtotal strong").textContent = "₹0.00";
+
+        billItems.appendChild(newItem);
+        updateTotals();
+    });
+}
+
+updateTotals();
+</script>
+
+{% endblock %}

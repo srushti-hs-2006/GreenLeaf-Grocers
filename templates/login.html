@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Login | GreenLeaf Grocers{% endblock %}
+
+{% block auth_content %}
+
+<div class="login-page">
+
+    <div class="login-decoration">
+        <div class="login-logo">🌿</div>
+        <h1>Fresh Stock.<br>Smart Business.</h1>
+        <p>
+            Manage your inventory, track sales, and make
+            smarter business decisions with GreenLeaf Grocers.
+        </p>
+
+        <div class="login-features">
+            <div>✓ Real-time inventory management</div>
+            <div>✓ Automated billing and stock updates</div>
+            <div>✓ Sales analytics and reports</div>
+        </div>
+
+        <small>GREENLEAF GROCERS · RETAIL MANAGEMENT</small>
+    </div>
+
+    <div class="login-form-container">
+        <form method="POST" class="login-card">
+            <div class="login-heading">
+                <span>WELCOME BACK</span>
+                <h2>Sign in to your account</h2>
+                <p>Enter your credentials to continue.</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <label for="username">Username</label>
+            <input id="username" name="username"
+                   type="text" placeholder="Enter username"
+                   autocomplete="username" required>
+
+            <label for="password">Password</label>
+            <input id="password" name="password"
+                   type="password" placeholder="Enter password"
+                   autocomplete="current-password" required>
+
+            <button type="submit" class="primary-button">
+                Sign In →
+            </button>
+
+            <div class="login-help">
+                <strong>Demo accounts</strong>
+                <p>Admin: admin / Admin@123</p>
+                <p>Cashier: cashier / Cashier@123</p>
+            </div>
+
+            <footer>© 2026 GreenLeaf Grocers</footer>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

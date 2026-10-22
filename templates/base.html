@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GreenLeaf Grocers{% endblock %}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+{% if session.get('user_id') %}
+<div class="app-layout">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-icon">🌿</span>
+            <div>
+                <h2>GreenLeaf</h2>
+                <small>GROCERS MANAGEMENT</small>
+            </div>
+        </div>
+
+        <div class="user-info">
+            <div class="avatar">👤</div>
+            <div>
+                <strong>{{ session.get('username') }}</strong>
+                <small>{{ session.get('role', '').title() }}</small>
+            </div>
+        </div>
+
+        <nav class="navigation">
+            <a href="{{ url_for('dashboard') }}">📊 Dashboard</a>
+            {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('products') }}">📦 Products</a>
+            {% endif %}
+            <a href="{{ url_for('billing') }}">🧾 Billing</a>
+            {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('export_report') }}">📈 Sales Reports</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="logout-link">🚪 Logout</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span>🌱</span> Smart Retail Management
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h3>{% block page_heading %}Overview{% endblock %}</h3>
+                <p>GreenLeaf Grocers / Management System</p>
+            </div>
+            <div class="status-badge">● System Online</div>
+        </header>
+
+        <div class="page-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+</div>
+{% else %}
+    {% block auth_content %}{% endblock %}
+{% endif %}
+
+</body>
+</html>
