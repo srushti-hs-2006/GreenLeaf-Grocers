@@ -1,0 +1,35 @@
+# Python cache
+
+**pycache**/
+*.py[cod]
+
+# Virtual environments
+
+.venv/
+venv/
+env/
+
+# Local database files
+
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+
+.env
+.env.*
+
+# Backup files
+
+*_backup.py
+
+# Test cache and coverage
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# VS Code settings
+
+.vscode/
